@@ -116,3 +116,35 @@
 #prev-btn:hover, #next-btn:hover {
     background-color: #f3f4f6; /* Tailwind's gray-100 */
 }
+.footer-link {
+    transition: color 0.2s ease;
+}
+.footer-link:hover {
+    color: #e11d48;
+}
+
+.social-icon {
+    color: #64748b;
+    transition: color 0.2s ease;
+}
+.social-icon:hover {
+    color: #e11d48;
+}
+
+.payment-icon {
+    font-size: 1.4rem;
+    color: #64748b;
+}
+
+.help-btn:hover {
+    background-color: #f1f5f9;
+}
+.payment-icon {
+    height: 1.25rem;   /* same height as old icons */
+    width: auto;        /* keep aspect ratio */
+    display: inline-block;
+}.payment-icon:hover {
+    opacity: 0.8;       /* subtle fade on hover */
+    transform: scale(1.1); /* slight zoom */
+    transition: all 0.2s ease-in-out;
+}

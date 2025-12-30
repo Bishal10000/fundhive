@@ -1,245 +1,186 @@
-<!-- @extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Explore Fundraising Campaigns - FundHive')
 
 @section('content')
-<div class="bg-gray-50 min-h-screen">
+<div class="bg-slate-50 min-h-screen">
+
     <!-- Hero Section -->
-<div class="bg-[#fff5f5] py-14">
-        <div class="container mx-auto px-4">
-            <h1 class="text-3xl md:text-4xl font-bold mb-4">Fundraising Campaigns in India</h1>
-<p class="text-lg text-gray-600 mb-8 max-w-2xl">
-Support genuine causes across India. Every fundraiser is reviewed to ensure trust and transparency.
-</p>            
+    <div class="bg-rose-50 py-14">
+        <div class="max-w-7xl mx-auto px-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                Fundraising campaigns in Nepal
+            </h1>
+            <p class="text-lg text-slate-600 mb-8 max-w-2xl">
+                Discover genuine fundraising campaigns across Nepal.  
+                Every campaign is reviewed to maintain trust and transparency.
+            </p>
+
             <!-- Search -->
             <div class="max-w-3xl">
                 <form action="{{ route('campaigns.index') }}" method="GET" class="relative">
-                    <div class="relative">
-                        <input type="text" 
-                               name="search" 
-                               value="{{ request('search') }}"
-                               placeholder="Search for campaigns, causes, or people..." 
-                               class="w-full pl-12 pr-32 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <button type="submit" 
-                                class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700">
-                            Search
-                        </button>
-                    </div>
+                    <input type="text"
+                           name="search"
+                           value="{{ request('search') }}"
+                           placeholder="Search campaigns, causes, or names…"
+                           class="w-full pl-12 pr-36 py-4 rounded-lg border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:outline-none">
+
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+                    <button type="submit"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 bg-rose-600 text-white px-6 py-2 rounded-md hover:bg-rose-700 transition">
+                        Search
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 
-    <div class="container mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto px-4 py-10">
         <div class="flex flex-col lg:flex-row gap-8">
+
             <!-- Filters -->
-            <div class="lg:w-1/4">
+            <aside class="lg:w-1/4">
                 <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-<h3 class="font-semibold text-lg mb-6">Refine results</h3>
-                    
+                    <h3 class="font-semibold text-lg mb-6">Refine results</h3>
+
                     <!-- Category -->
                     <div class="mb-8">
-                        <h4 class="font-medium text-gray-700 mb-4">Category</h4>
-                        <div class="space-y-3">
-                            <a href="{{ route('campaigns.index') }}" 
-                               class="block py-2 px-4 rounded {{ !request('category') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
-                                All Categories
+                        <h4 class="font-medium text-slate-700 mb-4">Category</h4>
+                        <div class="space-y-2">
+                            <a href="{{ route('campaigns.index') }}"
+                               class="block px-4 py-2 rounded {{ !request('category') ? 'bg-rose-50 text-rose-600 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">
+                                All categories
                             </a>
+
                             @foreach($categories as $category)
-                            <a href="{{ route('campaigns.index', ['category' => $category->slug]) }}" 
-                               class="block py-2 px-4 rounded {{ request('category') == $category->slug ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
-                                <i class="{{ $category->icon }} mr-3"></i>
-                                {{ $category->name }}
-                                <span class="float-right text-gray-500">{{ $category->active_campaigns_count ?? '12K+' }}</span>
-                            </a>
+                                <a href="{{ route('campaigns.index', ['category' => $category->slug]) }}"
+                                   class="block px-4 py-2 rounded {{ request('category') == $category->slug ? 'bg-rose-50 text-rose-600 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">
+                                    <i class="{{ $category->icon }} mr-2"></i>
+                                    {{ $category->name }}
+                                </a>
                             @endforeach
                         </div>
                     </div>
-                    
+
                     <!-- Verification -->
                     <div class="mb-8">
-                        <h4 class="font-medium text-gray-700 mb-4">Verification</h4>
-                        <div class="space-y-3">
-                            <label class="flex items-center">
-                                <input type="checkbox" class="rounded text-blue-600 mr-3">
-                                <span>Verified campaigns only
-</span>
+                        <h4 class="font-medium text-slate-700 mb-4">Campaign type</h4>
+                        <div class="space-y-3 text-sm text-slate-600">
+                            <label class="flex items-center gap-3">
+                                <input type="checkbox" class="rounded text-rose-600">
+                                Verified campaigns only
                             </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" class="rounded text-blue-600 mr-3">
-                                <span>Emergency Campaigns</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" class="rounded text-blue-600 mr-3">
-                                <span>Featured Campaigns</span>
+                            <label class="flex items-center gap-3">
+                                <input type="checkbox" class="rounded text-rose-600">
+                                Emergency cases
                             </label>
                         </div>
                     </div>
-                    
-                    <!-- Progress -->
-                    <div class="mb-8">
-                        <h4 class="font-medium text-gray-700 mb-4">Progress</h4>
-                        <div class="space-y-3">
-                            <label class="flex items-center">
-                                <input type="radio" name="progress" class="text-blue-600 mr-3">
-                                <span>Almost Funded (>80%)</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="progress" class="text-blue-600 mr-3">
-                                <span>Recently Started (<30%)</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="progress" class="text-blue-600 mr-3">
-                                <span>Urgent Needs (<7 days)</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <button class="w-full btn-milaap py-3">
-                        <i class="fas fa-filter mr-2"></i> Apply Filters
-                    </button>
                 </div>
-                
-                <!-- AI Protection -->
-<div class="bg-white border border-gray-200 rounded-xl p-6">
-                    <div class="flex items-center mb-4">
-                        <i class="fas fa-brain text-2xl mr-4"></i>
+
+                <!-- Trust box -->
+                <div class="bg-white border border-slate-200 rounded-xl p-6">
+                    <div class="flex items-center gap-4 mb-3">
+                        <i class="fas fa-shield-alt text-2xl text-rose-600"></i>
                         <div>
-                            <div class="font-bold">AI Fraud Detection</div>
-                            <div class="text-sm opacity-90">Active on all campaigns</div>
+                            <p class="font-semibold">Trust & verification</p>
+                            <p class="text-sm text-slate-500">Applied to all campaigns</p>
                         </div>
                     </div>
-                    <p class="text-sm mb-4">
-Each fundraiser is reviewed to ensure it meets our trust and safety standards.
+                    <p class="text-sm text-slate-600">
+                        Each campaign is reviewed by our team to ensure authenticity.
                     </p>
-                    <a href="#" class="text-sm underline">Learn more →</a>
                 </div>
-            </div>
+            </aside>
 
             <!-- Campaigns -->
-            <div class="lg:w-3/4">
-                <!-- Header -->
+            <section class="lg:w-3/4">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900">
-                            @if(request('category'))
-                                {{ $categories->where('slug', request('category'))->first()->name ?? 'Campaigns' }}
-                            @else
-                                All Campaigns
-                            @endif
-                            <span class="text-gray-600">({{ $campaigns->total() }} results)</span>
-                        </h2>
-                        <p class="text-gray-600 text-sm mt-1">
-<i class="fas fa-check-circle text-green-500 mr-1"></i>
-All campaigns are reviewed for authenticity                        </p>
-                    </div>
-                    
-                    <div class="mt-4 md:mt-0">
-                        <select class="border rounded-lg px-4 py-2 bg-white">
-                            <option>Sort by: Most Relevant</option>
-                            <option>Most Recent</option>
-                            <option>Almost Funded</option>
-                            <option>Most Donated</option>
-                        </select>
-                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900">
+                        {{ $campaigns->total() }} campaigns found
+                    </h2>
+
+                    <select class="mt-4 md:mt-0 border rounded-lg px-4 py-2 bg-white text-sm">
+                        <option>Most relevant</option>
+                        <option>Most recent</option>
+                        <option>Almost funded</option>
+                    </select>
                 </div>
 
-                @if($campaigns->count() > 0)
+                @if($campaigns->count())
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         @foreach($campaigns as $campaign)
-                        <div class="campaign-card">
-                            <!-- Image -->
-                            <div class="relative">
+                            <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition">
+
                                 <a href="{{ route('campaigns.show', $campaign->slug) }}">
-                                    <img src="{{ asset('storage/' . $campaign->featured_image) }}" 
-                                         alt="{{ $campaign->title }}" 
+                                    <img src="{{ asset('storage/' . $campaign->featured_image) }}"
                                          class="w-full h-48 object-cover">
                                 </a>
-                                
-                                @if($campaign->is_verified)
-                                <div class="absolute top-4 left-4">
-                                   <span class="bg-white text-green-600 px-3 py-1 rounded-full text-xs font-semibold shadow">
-    <i class="fas fa-check-circle mr-1"></i> Verified
-</span>
 
-                                </div>
-                                @endif
-                                
-                            
-                                
-                                <div class="absolute bottom-4 left-4">
-                                    <span class="bg-white/90 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
-                                        <i class="{{ $campaign->category->icon }} mr-1"></i> {{ $campaign->category->name }}
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            <!-- Content -->
-                            <div class="p-6">
-                                <h3 class="font-bold text-lg mb-3">
-                                    <a href="{{ route('campaigns.show', $campaign->slug) }}" class="text-gray-900 hover:text-blue-600">
-                                        {{ $campaign->title }}
-                                    </a>
-                                </h3>
-                                
-                                <p class="text-gray-600 text-sm mb-6 line-clamp-2">{{ $campaign->description }}</p>
-                                
-                                <!-- Progress -->
-                                <div class="mb-8">
-                                    <div class="flex justify-between text-sm mb-2">
-                                        <span class="font-bold">₹{{ number_format($campaign->current_amount, 0) }} raised</span>
-                                        <span class="font-bold text-green-600">{{ number_format($campaign->progress, 0) }}%</span>
+                                <div class="p-6">
+                                    <h3 class="font-semibold text-lg mb-2">
+                                        <a href="{{ route('campaigns.show', $campaign->slug) }}"
+                                           class="hover:text-rose-600">
+                                            {{ $campaign->title }}
+                                        </a>
+                                    </h3>
+
+                                    <p class="text-sm text-slate-600 line-clamp-2 mb-4">
+                                        {{ $campaign->description }}
+                                    </p>
+
+                                    <!-- Progress -->
+                                    <div class="mb-5">
+                                        <div class="flex justify-between text-sm font-medium mb-1">
+                                            <span>Rs. {{ number_format($campaign->current_amount) }} raised</span>
+                                            <span class="text-green-600">{{ number_format($campaign->progress) }}%</span>
+                                        </div>
+
+                                        <div class="w-full bg-slate-200 rounded-full h-2">
+                                            <div class="bg-rose-600 h-2 rounded-full"
+                                                 style="width: {{ min($campaign->progress, 100) }}%"></div>
+                                        </div>
+
+                                        <div class="flex justify-between text-xs text-slate-500 mt-2">
+                                            <span>Goal: Rs. {{ number_format($campaign->goal_amount) }}</span>
+                                            <span>{{ $campaign->days_left }} days left</span>
+                                        </div>
                                     </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: {{ min($campaign->progress, 100) }}%"></div>
+
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-slate-500">
+                                            <i class="fas fa-users mr-1"></i>
+                                            {{ $campaign->donors_count }} supporters
+                                        </span>
+
+                                        <a href="{{ route('campaigns.show', $campaign->slug) }}"
+                                           class="bg-rose-600 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-rose-700 transition">
+                                            Donate
+                                        </a>
                                     </div>
-                                    <div class="flex justify-between text-sm mt-2">
-                                        <span class="text-gray-600">Goal: ₹{{ number_format($campaign->goal_amount, 0) }}</span>
-                                        <span class="text-gray-600">{{ $campaign->days_left }} days left</span>
-                                    </div>
-                                </div>
-                                
-                                <!-- Action -->
-                                <div class="flex justify-between items-center">
-                                    <div class="flex items-center text-sm text-gray-500">
-                                        <i class="fas fa-users mr-2"></i>
-                                        <span>{{ $campaign->donors_count }} donors</span>
-                                    </div>
-                                    <a href="{{ route('campaigns.show', $campaign->slug) }}" class="btn-milaap px-6 py-3 font-semibold">
-                                        Donate Now
-                                    </a>
                                 </div>
                             </div>
-                        </div>
                         @endforeach
                     </div>
-                    
-                    <!-- Pagination -->
-                    <div class="mt-12">
+
+                    <div class="mt-10">
                         {{ $campaigns->links('vendor.pagination.tailwind') }}
                     </div>
                 @else
                     <div class="bg-white rounded-xl p-12 text-center">
-                        <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="fas fa-search text-red-600 text-2xl"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">No campaigns found</h3>
-                        <p class="text-gray-600 mb-8 max-w-md mx-auto">
-                            Try adjusting your filters or start a new campaign to help someone in need.
+                        <h3 class="text-xl font-semibold mb-3">No campaigns found</h3>
+                        <p class="text-slate-600 mb-6">
+                            Try changing your search or explore other categories.
                         </p>
-                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                            <a href="{{ route('campaigns.index') }}" class="btn-milaap-outline px-6 py-3">
-                                Clear filters
-                            </a>
-                            <a href="{{ route('campaigns.create') }}" class="btn-milaap px-6 py-3 font-semibold">
-                                Start a campaign
-                            </a>
-                        </div>
+                        <a href="{{ route('campaigns.create') }}"
+                           class="bg-rose-600 text-white px-6 py-3 rounded-md font-medium hover:bg-rose-700">
+                            Start a fundraiser
+                        </a>
                     </div>
                 @endif
-            </div>
+            </section>
         </div>
     </div>
 </div>
-@endsection -->
+@endsection

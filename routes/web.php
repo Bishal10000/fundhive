@@ -56,3 +56,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
 });
+Route::view('/pricing', 'pages.pricing')->name('pricing');
+Route::view('/contact', 'pages.contact')->name('contact');
+Route::view('/code-of-practice', 'pages.code-of-practice')->name('code.of.practice');
+Route::view('/blog', 'pages.blog')->name('blog');
+Route::view('/faqs', 'pages.faqs')->name('faqs');
+Route::view('/guides', 'pages.guides')->name('guides');

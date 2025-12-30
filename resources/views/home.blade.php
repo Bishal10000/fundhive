@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@include('partials.navbar')
+
 
 @section('title', 'FundHive – Trusted Crowdfunding Platform in Nepal')
 
@@ -199,7 +199,7 @@
 </section>
 
 <!-- Final CTA -->
-<section class="bg-gray-900 text-white py-20">
+<!-- <section class="bg-gray-900 text-white py-20">
     <div class="container mx-auto px-4 text-center">
         <h2 class="text-3xl md:text-4xl font-bold mb-6">
             Need help raising funds?
@@ -226,6 +226,6 @@
             Secure payments • Verified campaigns • Community-driven support
         </p>
     </div>
-</section>
+</section> -->
 
 @endsection

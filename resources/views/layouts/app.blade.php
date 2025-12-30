@@ -128,128 +128,15 @@
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Top Announcement Bar -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-4">
-        <div class="max-w-7xl mx-auto text-center">
-            <p class="text-sm">
-                <i class="fas fa-shield-alt mr-2"></i>
-                <strong>AI Fraud Detection Active:</strong> Every campaign is verified by our machine learning algorithm
-                <a href="#" class="ml-2 underline font-medium">Learn more →</a>
-            </p>
-        </div>
-    </div>
+<body class="bg-white text-gray-900">
 
-  
+    @include('partials.navbar')
 
-    <!-- Main Content -->
     <main>
         @yield('content')
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-white pt-12 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <!-- Column 1 -->
-                <div>
-                    <div class="flex items-center space-x-2 mb-6">
-                        <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                            <i class="fas fa-hive text-blue-600"></i>
-                        </div>
-                        <span class="text-2xl font-bold">FundHive</span>
-                    </div>
-                    <p class="text-gray-400 text-sm mb-6">
-                        India's most trusted crowdfunding platform with AI-powered fraud detection.
-                        We help people raise funds for medical emergencies, education, and social causes.
-                    </p>
-                    <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white">
-                            <i class="fab fa-facebook-f text-lg"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white">
-                            <i class="fab fa-twitter text-lg"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white">
-                            <i class="fab fa-instagram text-lg"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white">
-                            <i class="fab fa-linkedin-in text-lg"></i>
-                        </a>
-                    </div>
-                </div>
+    @include('partials.footer')
 
-                <!-- Column 2 -->
-                <div>
-                    <h4 class="font-bold text-lg mb-6">Fundraise for</h4>
-                    <ul class="space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-white">Medical</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Education</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Memorial</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Emergency</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Nonprofits</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Creative</a></li>
-                    </ul>
-                </div>
-
-                <!-- Column 3 -->
-                <div>
-                    <h4 class="font-bold text-lg mb-6">Learn more</h4>
-                    <ul class="space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-white">How FundHive works</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Success stories</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Fraud Protection</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Pricing & fees</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Support</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Careers</a></li>
-                    </ul>
-                </div>
-
-                <!-- Column 4 -->
-                <div>
-                    <h4 class="font-bold text-lg mb-6">Resources</h4>
-                    <ul class="space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-white">Blog</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Help center</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Trust & Safety</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Terms of Service</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Privacy Policy</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Contact us</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="border-t border-gray-800 mt-12 pt-8">
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <div class="mb-4 md:mb-0">
-                        <p class="text-gray-400 text-sm">
-                            © 2024 FundHive. All rights reserved. | Crafted with AI Fraud Protection
-                        </p>
-                    </div>
-                    <div class="flex items-center space-x-6">
-                        <div class="flex items-center space-x-2">
-                            <i class="fas fa-shield-alt text-green-500"></i>
-                            <span class="text-sm text-gray-400">SSL Secure</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <i class="fas fa-lock text-green-500"></i>
-                            <span class="text-sm text-gray-400">PCI DSS Compliant</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <i class="fas fa-brain text-blue-500"></i>
-                            <span class="text-sm text-gray-400">AI Fraud Detection</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Live Chat Widget -->
-    <div class="fixed bottom-6 right-6 z-40">
-        <button class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition">
-            <i class="fas fa-comment-dots text-xl"></i>
-        </button>
-    </div>
 </body>
 </html>
