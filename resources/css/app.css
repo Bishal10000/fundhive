@@ -1,0 +1,118 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Custom Milaap-style components */
+.btn-milaap {
+    @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-6 rounded-lg 
+           hover:from-blue-700 hover:to-blue-800 transition-all duration-300 
+           hover:shadow-lg transform hover:-translate-y-0.5;
+}
+
+.card-milaap {
+    @apply bg-white rounded-xl shadow-milaap border border-gray-100 
+           hover:shadow-milaap-lg hover:border-blue-100 transition-all duration-300;
+}
+
+.progress-bar-milaap {
+    @apply h-1.5 rounded-full bg-gray-200 overflow-hidden;
+}
+
+.progress-fill {
+    @apply h-full rounded-full bg-gradient-to-r from-green-500 to-green-600;
+}
+
+.verified-badge-milaap {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+           bg-gradient-to-r from-green-500 to-green-600 text-white;
+}
+
+.category-icon-milaap {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl;
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+/* Custom animations */
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.float-animation {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Glass morphism */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+/* Add subtle hover effect to campaign cards */
+.bg-white:hover {
+    transform: translateY(-4px);
+    transition: all 0.3s ease-in-out;
+}
+
+/* Smooth progress bar animation */
+.w-full .bg-green-600 {
+    transition: width 0.5s ease;
+}
+#featured-carousel::-webkit-scrollbar {
+    display: none; /* hide scrollbar */
+}
+
+#featured-carousel {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+
+#prev-btn, #next-btn {
+    transition: background-color 0.2s;
+}
+
+#prev-btn:hover, #next-btn:hover {
+    background-color: #f3f4f6; /* Tailwind's gray-100 */
+}
