@@ -15,7 +15,7 @@
 
         <div class="mt-3 flex items-center gap-4">
             <span class="text-3xl font-bold text-blue-600">
-                {{ $rating['score'] }}/100
+{{ number_format($rating['score'], 0) }}/100
             </span>
 
             <span class="px-3 py-1 rounded-full text-sm font-medium
@@ -155,7 +155,7 @@
                 @endforelse
             </div>
             <div class="px-6 py-4 bg-gray-50">
-                <a href="{{ route('dashboard.campaigns') }}" class="text-blue-600 hover:text-blue-800 font-medium">
+                <a href="{{ route('campaigns.index') }}" class="text-blue-600 hover:text-blue-800 font-medium">
                     View All Campaigns <i class="fas fa-arrow-right ml-1"></i>
                 </a>
             </div>
@@ -199,7 +199,7 @@
                 @endforelse
             </div>
             <div class="px-6 py-4 bg-gray-50">
-                <a href="{{ route('dashboard.donations') }}" class="text-blue-600 hover:text-blue-800 font-medium">
+                <a href="{{ route('campaigns.index') }}" class="text-blue-600 hover:text-blue-800 font-medium">
                     View All Donations <i class="fas fa-arrow-right ml-1"></i>
                 </a>
             </div>

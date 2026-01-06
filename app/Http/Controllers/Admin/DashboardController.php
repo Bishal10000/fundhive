@@ -7,6 +7,9 @@ use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\User;
 use App\Models\FraudLog;
+use App\Models\Category;
+
+
 
 class DashboardController extends Controller
 {
@@ -78,4 +81,11 @@ class DashboardController extends Controller
 
         return back()->with('error', 'Campaign rejected');
     }
-}
+
+public function myCampaigns()
+{
+    return view('campaigns.index', [
+        'campaigns'  => Auth::user()->campaigns()->latest()->paginate(10),
+        'categories' => Category::where('is_active', true)->get(),
+    ]);
+}}

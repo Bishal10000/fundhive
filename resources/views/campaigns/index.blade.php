@@ -53,13 +53,17 @@
                                 All categories
                             </a>
 
-                            @foreach($categories as $category)
-                                <a href="{{ route('campaigns.index', ['category' => $category->slug]) }}"
-                                   class="block px-4 py-2 rounded {{ request('category') == $category->slug ? 'bg-rose-50 text-rose-600 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">
-                                    <i class="{{ $category->icon }} mr-2"></i>
-                                    {{ $category->name }}
-                                </a>
-                            @endforeach
+                           @foreach($categories as $category)
+    <a href="{{ route('campaigns.index', ['category' => $category->slug]) }}"
+       class="block px-4 py-2 rounded
+       {{ request('category') == $category->slug
+            ? 'bg-rose-50 text-rose-600 font-medium'
+            : 'text-slate-600 hover:bg-slate-50' }}">
+        <i class="{{ $category->icon ?? 'fa fa-folder' }} mr-2"></i>
+        {{ $category->name }}
+    </a>
+@endforeach
+
                         </div>
                     </div>
 
