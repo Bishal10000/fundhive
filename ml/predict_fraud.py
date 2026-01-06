@@ -1,7 +1,6 @@
 import pandas as pd
 import joblib
-
-# paths
+DB_PATH = "database/fundhive.sqlite"
 MODEL_PATH = "ml/models/fraud_model.pkl"
 SCALER_PATH = "ml/models/scaler.pkl"
 

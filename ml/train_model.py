@@ -1,9 +1,12 @@
-import sqlite3
 import pandas as pd
+import numpy as np
+import sqlite3
+import joblib
+import os
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
-import joblib
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -11,68 +14,134 @@ warnings.filterwarnings('ignore')
 # -----------------------------
 # Paths
 # -----------------------------
-DB_PATH = "database/fundhive.sqlite"
-MODEL_PATH = "ml/models/fraud_model.pkl"
-SCALER_PATH = "ml/models/scaler.pkl"
+DB_PATH = '../database/fundhive.sqlite'  # SQLite database path
+MODEL_DIR = 'ml/models'
+MODEL_PATH = os.path.join(MODEL_DIR, 'fraud_model.pkl')
+SCALER_PATH = os.path.join(MODEL_DIR, 'scaler.pkl')
+
+# -----------------------------
+# Connect to DB
+# -----------------------------
+def connect_to_db():
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        return conn
+    except Exception as e:
+        print(f"❌ Could not connect to DB: {e}")
+        return None
 
 # -----------------------------
 # Fetch training data from SQLite
 # -----------------------------
 def fetch_training_data():
-    """Fetch campaigns data from Laravel SQLite database"""
-    conn = sqlite3.connect(DB_PATH)
-    query = """
-        SELECT
-            goal_amount,
-            LENGTH(description) as description_length,
-            LENGTH(story) as story_length,
-            julianday(created_at) - julianday((SELECT created_at FROM users WHERE users.id = campaigns.user_id)) as user_age_days,
-            CASE WHEN gallery_images IS NULL THEN 0 ELSE json_array_length(gallery_images) END as num_images,
-            CASE WHEN video_url IS NOT NULL THEN 1 ELSE 0 END as has_video,
-            IFNULL((SELECT AVG(amount) FROM donations WHERE donations.campaign_id = campaigns.id), 0) as avg_donation_amount,
-            fraud_score,
-            CASE WHEN is_flagged THEN 1 ELSE 0 END as is_fraud,
-            urgency,           -- new column
-            past_campaigns,    -- new column
-            past_frauds,       -- new column
-            account_age        -- new column
-        FROM campaigns
-        WHERE status IN ('completed','suspended')
-    """
-    df = pd.read_sql(query, conn)
-    conn.close()
+    conn = connect_to_db()
+    if conn is None:
+        return pd.DataFrame()  # empty DataFrame if DB fails
+
+    try:
+        query = """
+        SELECT 
+            c.goal_amount,
+            LENGTH(c.description) as description_length,
+            LENGTH(c.story) as story_length,
+            (julianday(c.created_at) - julianday(u.created_at)) as user_age_days,
+            COALESCE(LENGTH(c.gallery_images), 0) as num_images,
+            CASE WHEN c.video_url IS NOT NULL AND c.video_url != '' THEN 1 ELSE 0 END as has_video,
+            COALESCE(d.avg_amount, 0) as avg_donation_amount,
+            CASE WHEN c.is_flagged THEN 1 ELSE 0 END as is_fraud
+        FROM campaigns c
+        LEFT JOIN users u ON c.user_id = u.id
+        LEFT JOIN (
+            SELECT campaign_id, AVG(amount) as avg_amount
+            FROM donations
+            GROUP BY campaign_id
+        ) d ON c.id = d.campaign_id
+        WHERE c.status IN ('completed', 'suspended')
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+        if df.empty:
+            print("⚠️ No data found in database, will use synthetic data.")
+        return df
+    except Exception as e:
+        print(f"❌ Failed to fetch DB data: {e}")
+        return pd.DataFrame()
+
+# -----------------------------
+# Generate synthetic data
+# -----------------------------
+def generate_synthetic_data(n_samples=2000):
+    data = []
+    for _ in range(n_samples):
+        goal_amount = np.random.randint(1000, 1000000)
+        description_length = np.random.randint(20, 500)
+        story_length = np.random.randint(50, 3000)
+        user_age_days = np.random.randint(1, 1500)
+        num_images = np.random.randint(0, 10)
+        has_video = np.random.choice([0, 1])
+        avg_donation_amount = np.random.randint(0, 1000)
+        is_fraud = 0
+        urgency = np.random.random()
+        past_campaigns = np.random.randint(0, 10)
+        past_frauds = np.random.randint(0, 2)
+        account_age = np.random.randint(1, 1500)
+
+        # simple rule for fraud
+        if urgency > 0.7 or past_frauds > 0:
+            is_fraud = 1
+
+        data.append([
+            goal_amount, description_length, story_length, user_age_days,
+            num_images, has_video, avg_donation_amount,
+            is_fraud, urgency, past_campaigns, past_frauds, account_age
+        ])
+
+    columns = [
+        'goal_amount', 'description_length', 'story_length', 'user_age_days',
+        'num_images', 'has_video', 'avg_donation_amount',
+        'is_fraud', 'urgency', 'past_campaigns', 'past_frauds', 'account_age'
+    ]
+    df = pd.DataFrame(data, columns=columns)
+    print(f"📊 Total synthetic samples: {len(df)}")
     return df
 
 # -----------------------------
 # Train model
 # -----------------------------
 def train_model():
-    """Train ML model and save it"""
-    print("🔍 Fetching training data...")
+    # Try DB first
     df = fetch_training_data()
+    use_synthetic = False
 
+    # If DB failed or empty, fallback to synthetic
     if df.empty:
-        print("❌ No training data found.")
-        return
-
-    print(f"📊 Training with {len(df)} records...")
+        print("💡 Using synthetic data instead...")
+        df = generate_synthetic_data()
+        use_synthetic = True
 
     # -----------------------------
     # Features and target
     # -----------------------------
-    feature_cols = [
-        'goal_amount', 'description_length', 'story_length',
-        'user_age_days', 'num_images', 'has_video', 'avg_donation_amount',
-        'urgency', 'past_campaigns', 'past_frauds', 'account_age'  # added
-    ]
-    X = df[feature_cols].fillna(0)
+    if use_synthetic:
+        features = [
+            'goal_amount', 'description_length', 'story_length', 'user_age_days',
+            'num_images', 'has_video', 'avg_donation_amount',
+            'urgency', 'past_campaigns', 'past_frauds', 'account_age'
+        ]
+    else:
+        features = [
+            'goal_amount', 'description_length', 'story_length', 'user_age_days',
+            'num_images', 'has_video', 'avg_donation_amount'
+        ]
+
+    X = df[features]
     y = df['is_fraud']
 
     # -----------------------------
     # Split data
     # -----------------------------
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
 
     # -----------------------------
@@ -83,27 +152,30 @@ def train_model():
     X_test_scaled = scaler.transform(X_test)
 
     # -----------------------------
-    # Train RandomForest model
+    # Train LogisticRegression
     # -----------------------------
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model = LogisticRegression(
+        random_state=42, max_iter=1000, class_weight='balanced', solver='liblinear'
+    )
     model.fit(X_train_scaled, y_train)
 
     # -----------------------------
     # Evaluate model
     # -----------------------------
-    acc = model.score(X_test_scaled, y_test)
-    print(f"✅ Model trained! Accuracy: {acc*100:.2f}%")
+    y_pred = model.predict(X_test_scaled)
+    print("\n📈 Model Performance:")
+    print(f"✅ Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+    print(f"🎯 Precision: {precision_score(y_test, y_pred, zero_division=0):.4f}")
+    print(f"📥 Recall: {recall_score(y_test, y_pred, zero_division=0):.4f}")
+    print(f"⚖️ F1-Score: {f1_score(y_test, y_pred, zero_division=0):.4f}")
 
     # -----------------------------
     # Save model and scaler
     # -----------------------------
+    os.makedirs(MODEL_DIR, exist_ok=True)
     joblib.dump(model, MODEL_PATH)
     joblib.dump(scaler, SCALER_PATH)
-    print(f"💾 Model saved to {MODEL_PATH}")
-    print(f"💾 Scaler saved to {SCALER_PATH}")
+    print(f"\n💾 Model saved successfully at {MODEL_PATH}")
 
-# -----------------------------
-# Run training
-# -----------------------------
 if __name__ == "__main__":
     train_model()
