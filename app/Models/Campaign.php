@@ -15,7 +15,7 @@ class Campaign extends Model
         'story', 'goal_amount', 'current_amount', 'deadline',
         'featured_image', 'gallery_images', 'video_url', 'status',
         'fraud_score', 'is_flagged', 'flag_reason', 'fraud_features',
-        'is_featured', 'is_verified', 'views'
+        'is_featured', 'is_verified', 'views','status','content_hash','last_checked_for_duplicate'
     ];
 
     protected $casts = [
@@ -84,4 +84,12 @@ class Campaign extends Model
         if ($this->fraud_score < 0.7) return 'medium';
         return 'high';
     }
+    protected static function booted()
+{
+    static::creating(function ($campaign) {
+        $text = strtolower($campaign->title . ' ' . $campaign->story);
+        $campaign->content_hash = md5($text);
+    });
+}
+
 }

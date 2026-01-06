@@ -10,6 +10,9 @@ use App\Models\FraudLog;
 
 class DashboardController extends Controller
 {
+    /* -------------------------
+     | Admin Dashboard
+     --------------------------*/
     public function index()
     {
         $stats = [
@@ -38,5 +41,41 @@ class DashboardController extends Controller
             ->get();
         
         return view('admin.dashboard', compact('stats', 'recentCampaigns', 'flaggedCampaigns', 'fraudLogs'));
+    }
+
+    /* -------------------------
+     | Fraud Management
+     --------------------------*/
+    // List all flagged campaigns
+    public function fraud()
+    {
+        $campaigns = Campaign::where('is_flagged', true)
+            ->orderByDesc('fraud_score')
+            ->with(['user', 'category'])
+            ->get();
+
+        return view('admin.fraud.index', compact('campaigns'));
+    }
+
+    // Approve a flagged campaign
+    public function approve(Campaign $campaign)
+    {
+        $campaign->update([
+            'is_flagged' => false,
+            'status' => 'active',
+            'fraud_score' => 0,
+        ]);
+
+        return back()->with('success', 'Campaign approved');
+    }
+
+    // Reject a flagged campaign
+    public function reject(Campaign $campaign)
+    {
+        $campaign->update([
+            'status' => 'suspended',
+        ]);
+
+        return back()->with('error', 'Campaign rejected');
     }
 }

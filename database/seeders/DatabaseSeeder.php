@@ -42,18 +42,8 @@ class DatabaseSeeder extends Seeder
         }
         
         // Create categories
-        $categories = [
-            ['name' => 'Medical', 'slug' => 'medical', 'icon' => 'fas fa-heartbeat'],
-            ['name' => 'Education', 'slug' => 'education', 'icon' => 'fas fa-graduation-cap'],
-            ['name' => 'Emergency', 'slug' => 'emergency', 'icon' => 'fas fa-ambulance'],
-            ['name' => 'Animals', 'slug' => 'animals', 'icon' => 'fas fa-paw'],
-            ['name' => 'Environment', 'slug' => 'environment', 'icon' => 'fas fa-leaf'],
-            ['name' => 'Creative', 'slug' => 'creative', 'icon' => 'fas fa-palette'],
-        ];
-        
-        foreach ($categories as $category) {
-            Category::create($category);
-        }
+        $this->call(CategorySeeder::class);
+
         
         // Create campaigns
         Campaign::factory(20)->create([

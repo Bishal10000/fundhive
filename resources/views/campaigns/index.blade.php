@@ -119,11 +119,18 @@
                                 </a>
 
                                 <div class="p-6">
-                                    <h3 class="font-semibold text-lg mb-2">
+                                    <h3 class="font-semibold text-lg mb-2 flex items-center justify-between">
                                         <a href="{{ route('campaigns.show', $campaign->slug) }}"
                                            class="hover:text-rose-600">
                                             {{ $campaign->title }}
                                         </a>
+
+                                        <!-- 🔴 Campaign Card Badge -->
+                                        @if($campaign->is_flagged)
+                                            <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                                                Under Review
+                                            </span>
+                                        @endif
                                     </h3>
 
                                     <p class="text-sm text-slate-600 line-clamp-2 mb-4">
@@ -148,16 +155,23 @@
                                         </div>
                                     </div>
 
-                                    <div class="flex justify-between items-center">
+                                    <div class="flex flex-col md:flex-row justify-between items-center gap-3">
                                         <span class="text-sm text-slate-500">
                                             <i class="fas fa-users mr-1"></i>
                                             {{ $campaign->donors_count }} supporters
                                         </span>
 
-                                        <a href="{{ route('campaigns.show', $campaign->slug) }}"
-                                           class="bg-rose-600 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-rose-700 transition">
-                                            Donate
-                                        </a>
+                                        @if($campaign->status !== 'active')
+    <p class="text-red-600 text-sm">
+        Donations temporarily disabled
+    </p>
+@else
+    <a href="{{ route('campaigns.show', $campaign->slug) }}"
+       class="bg-rose-600 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-rose-700 transition">
+        Donate
+    </a>
+@endif
+
                                     </div>
                                 </div>
                             </div>
