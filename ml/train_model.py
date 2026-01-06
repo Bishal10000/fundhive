@@ -1,125 +1,109 @@
 import sqlite3
 import pandas as pd
-import numpy as np
-import joblib
-import json
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.ensemble import RandomForestClassifier
+import joblib
 import warnings
 
 warnings.filterwarnings('ignore')
 
-def connect_to_db():
-    """Connect to SQLite database"""
-    # make sure this path matches your Laravel database file
-    return sqlite3.connect('database/fundhive.sqlite')
+# -----------------------------
+# Paths
+# -----------------------------
+DB_PATH = "database/fundhive.sqlite"
+MODEL_PATH = "ml/models/fraud_model.pkl"
+SCALER_PATH = "ml/models/scaler.pkl"
 
-
+# -----------------------------
+# Fetch training data from SQLite
+# -----------------------------
 def fetch_training_data():
-    """Fetch data from SQLite database for training"""
-    connection = connect_to_db()
-
+    """Fetch campaigns data from Laravel SQLite database"""
+    conn = sqlite3.connect(DB_PATH)
     query = """
-    SELECT 
-        c.goal_amount,
-        LENGTH(c.description) as description_length,
-        LENGTH(c.story) as story_length,
-        (julianday(c.created_at) - julianday(u.created_at)) as user_age_days,
-        COALESCE(LENGTH(c.gallery_images), 0) as num_images,
-        CASE WHEN c.video_url IS NOT NULL AND c.video_url != '' THEN 1 ELSE 0 END as has_video,
-        COALESCE(d.avg_amount, 0) as avg_donation_amount,
-        c.fraud_score,
-        CASE WHEN c.is_flagged THEN 1 ELSE 0 END as is_fraud
-    FROM campaigns c
-    LEFT JOIN users u ON c.user_id = u.id
-    LEFT JOIN (
-        SELECT campaign_id, AVG(amount) as avg_amount
-        FROM donations
-        GROUP BY campaign_id
-    ) d ON c.id = d.campaign_id
-    WHERE c.status IN ('completed', 'suspended')
+        SELECT
+            goal_amount,
+            LENGTH(description) as description_length,
+            LENGTH(story) as story_length,
+            julianday(created_at) - julianday((SELECT created_at FROM users WHERE users.id = campaigns.user_id)) as user_age_days,
+            CASE WHEN gallery_images IS NULL THEN 0 ELSE json_array_length(gallery_images) END as num_images,
+            CASE WHEN video_url IS NOT NULL THEN 1 ELSE 0 END as has_video,
+            IFNULL((SELECT AVG(amount) FROM donations WHERE donations.campaign_id = campaigns.id), 0) as avg_donation_amount,
+            fraud_score,
+            CASE WHEN is_flagged THEN 1 ELSE 0 END as is_fraud,
+            urgency,           -- new column
+            past_campaigns,    -- new column
+            past_frauds,       -- new column
+            account_age        -- new column
+        FROM campaigns
+        WHERE status IN ('completed','suspended')
     """
-
-    df = pd.read_sql(query, connection)
-    connection.close()
-
+    df = pd.read_sql(query, conn)
+    conn.close()
     return df
 
-
+# -----------------------------
+# Train model
+# -----------------------------
 def train_model():
-    """Train and save the fraud detection model"""
+    """Train ML model and save it"""
     print("🔍 Fetching training data...")
     df = fetch_training_data()
 
-    if len(df) < 20:
-        print(f"⚠️ Insufficient data for training: {len(df)} records")
-        print("💡 Need at least 20 records with fraud labels")
+    if df.empty:
+        print("❌ No training data found.")
         return
 
     print(f"📊 Training with {len(df)} records...")
 
+    # -----------------------------
     # Features and target
-    features = [
+    # -----------------------------
+    feature_cols = [
         'goal_amount', 'description_length', 'story_length',
-        'user_age_days', 'num_images', 'has_video', 'avg_donation_amount'
+        'user_age_days', 'num_images', 'has_video', 'avg_donation_amount',
+        'urgency', 'past_campaigns', 'past_frauds', 'account_age'  # added
     ]
+    X = df[feature_cols].fillna(0)
+    y = df['is_fraud']
 
-    X = df[features].fillna(df[features].mean())
-    y = df['is_fraud'].fillna(0)
-
+    # -----------------------------
     # Split data
+    # -----------------------------
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
+        X, y, test_size=0.2, random_state=42
     )
 
+    # -----------------------------
     # Scale features
+    # -----------------------------
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    # Train model
-    model = LogisticRegression(
-        random_state=42,
-        max_iter=1000,
-        class_weight='balanced',
-        solver='liblinear'
-    )
-
+    # -----------------------------
+    # Train RandomForest model
+    # -----------------------------
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
     model.fit(X_train_scaled, y_train)
 
-    # Evaluate
-    y_pred = model.predict(X_test_scaled)
+    # -----------------------------
+    # Evaluate model
+    # -----------------------------
+    acc = model.score(X_test_scaled, y_test)
+    print(f"✅ Model trained! Accuracy: {acc*100:.2f}%")
 
-    print("\n📈 Model Performance:")
-    print(f"✅ Accuracy: {accuracy_score(y_test, y_pred):.4f}")
-    print(f"🎯 Precision: {precision_score(y_test, y_pred, zero_division=0):.4f}")
-    print(f"📥 Recall: {recall_score(y_test, y_pred, zero_division=0):.4f}")
-    print(f"⚖️ F1-Score: {f1_score(y_test, y_pred, zero_division=0):.4f}")
-
+    # -----------------------------
     # Save model and scaler
-    joblib.dump(model, 'ml/models/fraud_model.pkl')
-    joblib.dump(scaler, 'ml/models/scaler.pkl')
+    # -----------------------------
+    joblib.dump(model, MODEL_PATH)
+    joblib.dump(scaler, SCALER_PATH)
+    print(f"💾 Model saved to {MODEL_PATH}")
+    print(f"💾 Scaler saved to {SCALER_PATH}")
 
-    # Save feature importance
-    feature_importance = dict(zip(features, model.coef_[0]))
-
-    with open('ml/models/feature_importance.json', 'w') as f:
-        json.dump(feature_importance, f, indent=2)
-
-    print("\n💾 Model saved successfully!")
-    print(f"📍 Model path: ml/models/fraud_model.pkl")
-
-    return {
-        'accuracy': accuracy_score(y_test, y_pred),
-        'precision': precision_score(y_test, y_pred, zero_division=0),
-        'recall': recall_score(y_test, y_pred, zero_division=0),
-        'f1_score': f1_score(y_test, y_pred, zero_division=0),
-        'features': features,
-        'coefficients': model.coef_[0].tolist()
-    }
-
-
+# -----------------------------
+# Run training
+# -----------------------------
 if __name__ == "__main__":
     train_model()
