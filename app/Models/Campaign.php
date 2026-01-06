@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Carbon\Carbon;
 
 class Campaign extends Model
 {
@@ -15,7 +16,8 @@ class Campaign extends Model
         'story', 'goal_amount', 'current_amount', 'deadline',
         'featured_image', 'gallery_images', 'video_url', 'status',
         'fraud_score', 'is_flagged', 'flag_reason', 'fraud_features',
-        'is_featured', 'is_verified', 'views','status','content_hash','last_checked_for_duplicate'
+        'is_featured', 'is_verified', 'views', 'content_hash',
+        'last_checked_for_duplicate'
     ];
 
     protected $casts = [
@@ -31,6 +33,9 @@ class Campaign extends Model
         'last_fraud_check' => 'datetime'
     ];
 
+    /* -------------------------
+     | Relationships
+     --------------------------*/
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -61,35 +66,44 @@ class Campaign extends Model
         return $this->hasMany(FraudLog::class);
     }
 
-    // Accessors
-    public function getProgressAttribute()
+    /* -------------------------
+     | Accessors
+     --------------------------*/
+    public function getProgressAttribute(): float
     {
         if ($this->goal_amount == 0) return 0;
-        return ($this->current_amount / $this->goal_amount) * 100;
+        return round(($this->current_amount / $this->goal_amount) * 100, 2);
     }
 
-    public function getDaysLeftAttribute()
+    // ✅ FIXED DAYS LEFT (INTEGER, NO DECIMALS)
+    public function getDaysLeftAttribute(): int
     {
-        return max(0, now()->diffInDays($this->deadline, false));
+        return max(
+            0,
+            now()->diffInDays(Carbon::parse($this->deadline), false)
+        );
     }
 
-    public function getDonorsCountAttribute()
+    public function getDonorsCountAttribute(): int
     {
         return $this->donations()->count();
     }
 
-    public function getRiskLevelAttribute()
+    public function getRiskLevelAttribute(): string
     {
         if ($this->fraud_score < 0.3) return 'low';
         if ($this->fraud_score < 0.7) return 'medium';
         return 'high';
     }
-    protected static function booted()
-{
-    static::creating(function ($campaign) {
-        $text = strtolower($campaign->title . ' ' . $campaign->story);
-        $campaign->content_hash = md5($text);
-    });
-}
 
+    /* -------------------------
+     | Model Events
+     --------------------------*/
+    protected static function booted()
+    {
+        static::creating(function ($campaign) {
+            $text = strtolower($campaign->title . ' ' . $campaign->story);
+            $campaign->content_hash = md5($text);
+        });
+    }
 }

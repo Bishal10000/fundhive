@@ -3,6 +3,38 @@
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Welcome -->
+     <!-- User Profile Rating -->
+<div class="mb-8 bg-white rounded-xl shadow-sm p-6 flex items-center justify-between">
+    <div>
+        <h2 class="text-lg font-semibold text-gray-800">
+            User Trust Rating
+        </h2>
+        <p class="text-sm text-gray-600 mt-1">
+            Based on your profile background and past activity
+        </p>
+
+        <div class="mt-3 flex items-center gap-4">
+            <span class="text-3xl font-bold text-blue-600">
+                {{ $rating['score'] }}/100
+            </span>
+
+            <span class="px-3 py-1 rounded-full text-sm font-medium
+                {{ $rating['label'] === 'Trusted User' ? 'bg-green-100 text-green-800' :
+                   ($rating['label'] === 'Normal User' ? 'bg-yellow-100 text-yellow-800' :
+                   'bg-red-100 text-red-800') }}">
+                {{ $rating['label'] }}
+            </span>
+        </div>
+    </div>
+
+    <div class="text-right text-sm text-gray-500">
+        <p>Account Age: {{ Auth::user()->created_at->diffForHumans() }}</p>
+        <p>Email Verified:
+            {{ Auth::user()->email_verified_at ? 'Yes ✅' : 'No ❌' }}
+        </p>
+    </div>
+</div>
+
     <div class="mb-8">
         <h1 class="text-2xl md:text-3xl font-bold text-gray-900">
             Hello {{ Auth::user()->name }},
@@ -11,7 +43,7 @@
             Here's a quick overview of your fundraisers and contributions
         </p>
     </div>
-
+               
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-sm p-6">
