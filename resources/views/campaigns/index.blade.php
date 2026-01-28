@@ -117,9 +117,25 @@
                         @foreach($campaigns as $campaign)
                             <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition">
 
-                                <a href="{{ route('campaigns.show', $campaign->slug) }}">
-                                    <img src="{{ asset('storage/' . $campaign->featured_image) }}"
-                                         class="w-full h-48 object-cover">
+                                <a href="{{ route('campaigns.show', $campaign->slug) }}" class="block relative h-48 bg-gray-200 overflow-hidden">
+                                    @if($campaign->featured_image && $campaign->featured_image !== 'default.jpg')
+                                        @php
+                                            $imagePath = Str::startsWith($campaign->featured_image, 'campaigns/') 
+                                                ? $campaign->featured_image 
+                                                : 'campaigns/' . $campaign->featured_image;
+                                        @endphp
+                                        <img src="{{ asset('storage/' . $imagePath) }}"
+                                             alt="{{ $campaign->title }}"
+                                             class="w-full h-full object-cover"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="w-full h-full bg-gradient-to-br from-rose-400 to-rose-600 items-center justify-center" style="display: none;">
+                                            <i class="fas fa-bullhorn text-white text-4xl"></i>
+                                        </div>
+                                    @else
+                                        <div class="w-full h-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center">
+                                            <i class="fas fa-bullhorn text-white text-4xl"></i>
+                                        </div>
+                                    @endif
                                 </a>
 
                                 <div class="p-6">

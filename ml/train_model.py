@@ -113,10 +113,24 @@ def train_model():
     df = fetch_training_data()
     use_synthetic = False
 
-    # If DB failed or empty, fallback to synthetic
-    if df.empty:
-        print("💡 Using synthetic data instead...")
-        df = generate_synthetic_data()
+    # If DB failed or has < 200 samples, use/supplement with synthetic
+    if df.empty or len(df) < 200:
+        if not df.empty:
+            print(f"⚠️ Only {len(df)} samples in DB. Supplementing with synthetic data...")
+            df_synthetic = generate_synthetic_data(n_samples=2000 - len(df))
+            df = pd.concat([df, df_synthetic], ignore_index=True)
+        else:
+            print("💡 No DB data available. Generating synthetic dataset...")
+            df = generate_synthetic_data(n_samples=2000)
+        use_synthetic = True
+    
+    # Ensure we have both fraud and non-fraud samples
+    fraud_count = (df['is_fraud'] == 1).sum() if 'is_fraud' in df.columns else 0
+    non_fraud_count = (df['is_fraud'] == 0).sum() if 'is_fraud' in df.columns else 0
+    
+    if fraud_count == 0 or non_fraud_count == 0:
+        print(f"⚠️ Imbalanced data (fraud: {fraud_count}, non-fraud: {non_fraud_count}). Generating balanced synthetic data...")
+        df = generate_synthetic_data(n_samples=2000)
         use_synthetic = True
 
     # -----------------------------
@@ -134,8 +148,14 @@ def train_model():
             'num_images', 'has_video', 'avg_donation_amount'
         ]
 
-    X = df[features]
+    X = df[features].fillna(0)
     y = df['is_fraud']
+
+    # Ensure X and y have no NaN values
+    X = X.dropna()
+    y = y[X.index]
+    
+    print(f"✅ Dataset prepared with {len(X)} samples (fraud: {(y==1).sum()}, non-fraud: {(y==0).sum()})")
 
     # -----------------------------
     # Split data
@@ -155,7 +175,7 @@ def train_model():
     # Train LogisticRegression
     # -----------------------------
     model = LogisticRegression(
-        random_state=42, max_iter=1000, class_weight='balanced', solver='liblinear'
+        random_state=42, max_iter=1000, class_weight='balanced', solver='lbfgs'
     )
     model.fit(X_train_scaled, y_train)
 

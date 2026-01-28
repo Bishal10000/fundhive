@@ -29,10 +29,17 @@
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <a href="{{ route('campaigns.create') }}"
-                       class="bg-red-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-red-700 text-lg">
-                        Start a fundraiser
-                    </a>
+                    @auth
+                        <a href="{{ route('campaigns.create') }}"
+                           class="bg-red-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-red-700 text-lg">
+                            Start a fundraiser
+                        </a>
+                    @else
+                        <a href="{{ route('login') }}"
+                           class="bg-red-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-red-700 text-lg">
+                            Start a fundraiser
+                        </a>
+                    @endauth
 
                     <a href="{{ route('campaigns.index') }}"
                        class="border border-gray-300 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 text-lg">

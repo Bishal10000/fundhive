@@ -5,11 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Campaign;
 use App\Models\Category;
 use App\Models\Donation;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+
+// Add these imports:
 use App\Services\FraudDetectionService;
 use App\Services\DuplicateCampaignService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use App\Services\UserVerificationService;
+
 
 class CampaignController extends Controller
 {
@@ -115,45 +122,45 @@ class CampaignController extends Controller
      --------------------------*/
     public function create()
     {
+        $categories = Category::all();
+        
         return view('campaigns.create', [
-            'categories' => Category::where('is_active', true)->get(),
+            'categories' => $categories,
         ]);
     }
 
     public function store(Request $request)
     {
-        // Step 1: Validate
-        $validated = $request->validate($this->rules());
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'category_id' => 'required|exists:categories,id',
+            'story' => "required|string|min:{$this->storyMinLength}",
+            'goal_amount' => "required|numeric|min:{$this->goalMin}|max:{$this->goalMax}",
+            'deadline' => 'required|date|after:today',
+            'featured_image' => "required|image|max:{$this->imageMaxSize}",
+            'gallery_images.*' => "image|max:{$this->imageMaxSize}",
+            'video_url' => 'nullable|url',
+        ]);
 
-        // Step 2: Duplicate check
-        if ($this->dupService->isDuplicate($validated, auth()->id())) {
-            return back()
-                ->withErrors(['title' => 'Duplicate campaign detected.'])
-                ->withInput();
+        // Generate unique slug
+        $slug = Str::slug($validated['title']);
+        $originalSlug = $slug;
+        $counter = 1;
+        
+        while (Campaign::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
         }
+        
+        $validated['slug'] = $slug;
 
-        // Step 3: Emergency restriction
-        $category = Category::find($validated['category_id']);
-        if ($category && $category->slug === 'emergency') {
-            $recent = Campaign::where('user_id', auth()->id())
-                ->where('category_id', $category->id)
-                ->where('created_at', '>=', now()->subDays(30))
-                ->exists();
-
-            if ($recent) {
-                return back()
-                    ->withErrors(['category_id' => 'Emergency campaign limit reached.'])
-                    ->withInput();
-            }
-        }
-
-        // Step 4: Featured image
+        // Handle image upload
         if ($request->hasFile('featured_image')) {
-            $validated['featured_image'] =
-                $request->file('featured_image')->store('campaigns', 'public');
+            $validated['featured_image'] = $request->file('featured_image')->store('campaigns', 'public');
         }
 
-        // Step 5: Gallery images
+        // Handle gallery images if present
         if ($request->hasFile('gallery_images')) {
             $paths = [];
             foreach ($request->file('gallery_images') as $image) {
@@ -162,36 +169,29 @@ class CampaignController extends Controller
             $validated['gallery_images'] = $paths;
         }
 
-        $validated['user_id'] = auth()->id();
-        $validated['status']  = 'pending';
-        $validated['slug']    = $this->generateUniqueSlug($validated['title']);
-
-        // Step 6: Create campaign
-        $campaign = Campaign::create($validated);
-
-        // Step 7: Fraud detection
-        $fraud = $this->fraudService->analyze($campaign);
-
-        // Step 8: Update fraud result
-        $isFlagged = $fraud['fraud_probability'] >= 0.7;
-
-        $campaign->update([
-            'fraud_score'    => $fraud['fraud_probability'],
-            'fraud_features' => json_encode($fraud['features']),
-            'is_flagged'     => $isFlagged,
-            'status'         => $isFlagged ? 'pending' : 'active',
+        $campaign = Campaign::create([
+            'user_id' => auth()->id(),
+            'status' => 'active',
+            ...$validated,
         ]);
 
-        // Step 8.5: Message
-        $message = $isFlagged
-            ? 'Campaign created but flagged for review.'
-            : 'Campaign created successfully.';
+        // Calculate fraud score for new campaign
+        $fraudService = app(FraudDetectionService::class);
+        $fraudScore = $fraudService->calculateFraudScore($campaign);
+        
+        // Update campaign with fraud score and flag if necessary
+        $campaign->fraud_score = $fraudScore;
+        $campaign->is_flagged = $fraudScore >= 0.70; // High risk threshold (0-1 scale)
+        if ($campaign->is_flagged) {
+            $campaign->flag_reason = $fraudService->getFlagReasons($campaign);
+        }
+        $campaign->save();
 
-        // Step 9: Redirect
-        return redirect()
-            ->route('campaigns.show', $campaign->slug)
-            ->with('success', $message)
-            ->with('fraud_score', $fraud['fraud_probability']);
+        // Check if user now qualifies for auto-verification
+        $verificationService = app(UserVerificationService::class);
+        $verificationService->attemptAutoVerification(auth()->user());
+
+        return redirect()->route('campaigns.show', $campaign)->with('status', 'Campaign created successfully!');
     }
 
     /* -------------------------
@@ -212,13 +212,11 @@ class CampaignController extends Controller
         $this->authorize('update', $campaign);
 
         $validated = $request->validate($this->rules(true));
-
         if ($request->hasFile('featured_image')) {
             Storage::disk('public')->delete($campaign->featured_image);
             $validated['featured_image'] =
                 $request->file('featured_image')->store('campaigns', 'public');
         }
-
         if ($request->hasFile('gallery_images')) {
             $paths = $campaign->gallery_images ?? [];
             foreach ($request->file('gallery_images') as $image) {
@@ -226,34 +224,20 @@ class CampaignController extends Controller
             }
             $validated['gallery_images'] = $paths;
         }
-
         $campaign->update($validated);
 
-        // Re-run fraud detection
-        $fraud = $this->fraudService->analyze($campaign);
-        $isFlagged = $fraud['fraud_probability'] >= 0.7;
-
-        $campaign->update([
-            'fraud_score' => $fraud['fraud_probability'],
-            'is_flagged'  => $isFlagged,
-            'status'      => $isFlagged ? 'pending' : 'active',
-        ]);
-
-        return redirect()
-            ->route('campaigns.show', $campaign->slug)
-            ->with('success', 'Campaign updated successfully.');
+        return redirect()->route('campaigns.show', $campaign)->with('status', 'Campaign updated successfully!');
     }
 
     /* -------------------------
-     | Delete
+     | Delete Campaign
      --------------------------*/
     public function destroy(Campaign $campaign)
     {
         $this->authorize('delete', $campaign);
         $campaign->delete();
 
-        return redirect()
-            ->route('dashboard')
+        return redirect()->route('dashboard')
             ->with('success', 'Campaign deleted successfully!');
     }
 
@@ -267,34 +251,37 @@ class CampaignController extends Controller
                 'donation' => 'Donations are disabled for this campaign.'
             ]);
         }
-
+        
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:1',
-            'donor_name' => 'required|string|max:255',
-            'donor_email' => 'required|email',
+            'amount' => 'required|numeric|min:10',
+            'donor_name' => 'nullable|string|max:255',
             'message' => 'nullable|string|max:500',
-            'is_anonymous' => 'boolean',
-            'payment_method' => 'required|in:stripe,paypal,bank_transfer',
+            'is_anonymous' => 'nullable|boolean',
+            'payment_method' => 'required|in:esewa,khalti,fonepay',
         ]);
 
-        Donation::create([
-            'campaign_id'   => $campaign->id,
-            'user_id'       => auth()->id(),
-            'transaction_id'=> 'DON-' . Str::random(16),
-            'amount'        => $validated['amount'],
-            'currency'      => 'USD',
-            'payment_method'=> $validated['payment_method'],
-            'status'        => 'completed',
-            'donor_name'    => $validated['donor_name'],
-            'donor_email'   => $validated['donor_email'],
-            'message'       => $validated['message'] ?? null,
-            'is_anonymous'  => $validated['is_anonymous'] ?? false,
+        // Generate transaction ID
+        $transactionId = strtoupper($validated['payment_method']) . '-' . date('YmdHis') . '-' . Str::random(6);
+
+        // Create donation record
+        $donation = Donation::create([
+            'campaign_id' => $campaign->id,
+            'user_id' => auth()->id(),
+            'transaction_id' => $transactionId,
+            'amount' => $validated['amount'],
+            'currency' => 'NPR',
+            'payment_method' => $validated['payment_method'],
+            'donor_name' => $validated['donor_name'] ?? auth()->user()?->name ?? 'Anonymous',
+            'donor_email' => auth()->user()?->email ?? 'anonymous@fundhive.com',
+            'message' => $validated['message'],
+            'is_anonymous' => $validated['is_anonymous'] ?? false,
+            'status' => 'pending', // Will be updated after payment confirmation
         ]);
 
-        $campaign->increment('amount_raised', $validated['amount']);
-
-        return redirect()
-            ->route('campaigns.show', $campaign->slug)
-            ->with('success', 'Donation successful!');
+        // Redirect to payment gateway simulation
+        return redirect()->route('payment.process', [
+            'donation' => $donation->id,
+            'gateway' => $validated['payment_method']
+        ]);
     }
 }

@@ -21,7 +21,14 @@ class User extends Authenticatable
         'address',
         'bio',
         'social_links',
-        'email_verified_at'
+        'email_verified_at',
+        'is_blocked',
+        'education',
+        'occupation',
+        'work_history',
+        'is_verified',
+        'background_notes',
+        'verified_at'
     ];
 
     protected $hidden = [
@@ -32,7 +39,10 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'social_links' => 'array'
+        'social_links' => 'array',
+        'is_blocked' => 'boolean',
+        'is_verified' => 'boolean',
+        'verified_at' => 'datetime'
     ];
 
     public function campaigns()

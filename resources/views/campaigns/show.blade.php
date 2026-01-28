@@ -83,18 +83,100 @@
                     <span>{{ $campaign->days_left }} days left</span>
                 </div>
 
-                <form action="{{ route('campaigns.donate', $campaign) }}" method="POST">
+                <form action="{{ route('campaigns.donate', $campaign) }}" method="POST" x-data="{ amount: 0, showPaymentOptions: false }">
                     @csrf
 
-                    <input type="number"
-                           name="amount"
-                           placeholder="Enter amount (Rs.)"
-                           required
-                           class="w-full border rounded-lg px-4 py-3 mb-4">
+                    <!-- Donation Amount -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">
+                            Enter Amount (NPR)
+                        </label>
+                        <input type="number"
+                               name="amount"
+                               x-model="amount"
+                               placeholder="Enter amount"
+                               required
+                               min="10"
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-rose-500 focus:outline-none">
+                        
+                        <!-- Quick amount buttons -->
+                        <div class="grid grid-cols-3 gap-2 mt-2">
+                            <button type="button" @click="amount = 100" 
+                                    class="border border-slate-300 rounded-lg py-2 text-sm hover:bg-slate-50">
+                                Rs. 100
+                            </button>
+                            <button type="button" @click="amount = 500" 
+                                    class="border border-slate-300 rounded-lg py-2 text-sm hover:bg-slate-50">
+                                Rs. 500
+                            </button>
+                            <button type="button" @click="amount = 1000" 
+                                    class="border border-slate-300 rounded-lg py-2 text-sm hover:bg-slate-50">
+                                Rs. 1000
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method Selection -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">
+                            Choose Payment Method
+                        </label>
+                        
+                        <!-- eSewa -->
+                        <label class="flex items-center p-4 border border-slate-300 rounded-lg mb-2 cursor-pointer hover:bg-slate-50">
+                            <input type="radio" name="payment_method" value="esewa" required class="mr-3">
+                            <img src="{{ asset('assets/img/esewa.png') }}" alt="eSewa" class="h-8 mr-3">
+                            <span class="text-sm font-medium">eSewa</span>
+                        </label>
+
+                        <!-- Khalti -->
+                        <label class="flex items-center p-4 border border-slate-300 rounded-lg mb-2 cursor-pointer hover:bg-slate-50">
+                            <input type="radio" name="payment_method" value="khalti" required class="mr-3">
+                            <img src="{{ asset('assets/img/khalti.png') }}" alt="Khalti" class="h-8 mr-3">
+                            <span class="text-sm font-medium">Khalti</span>
+                        </label>
+
+                        <!-- FonePay -->
+                        <label class="flex items-center p-4 border border-slate-300 rounded-lg mb-2 cursor-pointer hover:bg-slate-50">
+                            <input type="radio" name="payment_method" value="fonepay" required class="mr-3">
+                            <img src="{{ asset('assets/img/fonepay.jpeg') }}" alt="FonePay" class="h-8 mr-3">
+                            <span class="text-sm font-medium">FonePay</span>
+                        </label>
+                    </div>
+
+                    <!-- Optional: Donor Name (for anonymous donations) -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">
+                            Your Name <span class="text-slate-400">(optional)</span>
+                        </label>
+                        <input type="text"
+                               name="donor_name"
+                               placeholder="Enter your name"
+                               value="{{ auth()->user()->name ?? '' }}"
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-rose-500 focus:outline-none">
+                    </div>
+
+                    <!-- Optional: Message -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">
+                            Message <span class="text-slate-400">(optional)</span>
+                        </label>
+                        <textarea name="message"
+                                  rows="2"
+                                  placeholder="Leave a message of support"
+                                  class="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-rose-500 focus:outline-none"></textarea>
+                    </div>
+
+                    <!-- Anonymous option -->
+                    <label class="flex items-center mb-4">
+                        <input type="checkbox" name="is_anonymous" value="1" class="mr-2">
+                        <span class="text-sm text-slate-600">Donate anonymously</span>
+                    </label>
 
                     <button type="submit"
-                            class="w-full bg-rose-600 text-white py-3 rounded-lg font-semibold hover:bg-rose-700">
-                        Donate now
+                            class="w-full bg-rose-600 text-white py-3 rounded-lg font-semibold hover:bg-rose-700 transition">
+                        <span x-show="amount > 0" x-text="'Donate Rs. ' + amount"></span>
+                        <span x-show="amount == 0">Donate now</span>
                     </button>
                 </form>
 

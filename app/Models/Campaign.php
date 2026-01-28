@@ -66,6 +66,11 @@ class Campaign extends Model
         return $this->hasMany(FraudLog::class);
     }
 
+    public function successStory()
+    {
+        return $this->hasOne(SuccessStory::class);
+    }
+
     /* -------------------------
      | Accessors
      --------------------------*/
